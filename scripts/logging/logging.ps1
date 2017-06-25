@@ -33,5 +33,3 @@ function LogToFile () {
     $output = "[$date][$type][$functionCall]: $message"
     Write-output $output
 }
-
-#LogToFile -message "Test Message" -type Info
