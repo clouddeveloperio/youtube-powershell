@@ -1,3 +1,13 @@
+function new-scriptFrame(){
+    param(
+        [Parameter(Mandatory=$true)][string]$frameName,
+        [Parameter(Mandatory=$true)][string]$line
+    )
+    return New-Object PSObject @{
+        Name = $frameName
+        Line = $line
+    }
+}
 function LogToFile () {
     param(
         [Parameter(Mandatory=$true)][string]$message,
@@ -5,32 +15,22 @@ function LogToFile () {
     )
 
     $date = Get-Date -Format g
-
-    $stack = @()
-    $line = 0
     $trace = Get-PSCallStack
 
-    foreach($frame in $trace){
-        $frameName = $frame.Command
-        $stack += $frameName
-    }
-
-    $callStack = $stack[-1..-($stack.Length - 1)]
-    $functionCall = ""
-
-    foreach($frame in $callStack){
-        if($frame -ne "LogToFile"){
-            $functionCall += $frame + "|"
-        }
-    }
-
+    $stack = @()
+    $trace | %{ $stack += $_.Command }
+       
     $lineArray = $trace.ScriptLineNumber -split ' '
-    $lineArray = $lineArray | select -Skip 1 | select -SkipLast 1
-    $line = $lineArray -join ':'
 
+    $frameTable = New-Object System.Collections.ArrayList
+    $lineArray | %{ $i = 0 } { $frameItem = new-scriptFrame -frameName $stack[$i] -line $lineArray[$i]; $frameTable.Add($frameItem) | Out-Null; $i++ }
+    $frameTable.Reverse()
+    $frameTable = $frameTable | select -Skip 1 | select -SkipLast 1
+
+    $frameTable | %{ $functionCall += "$($_.Name):$($_.Line)|"}
     $functionCall = $functionCall.SubString(0, $functionCall.Length -1)
-    $output = "[$date][$type][$functionCall][$line]: $message"
 
+    $output = "[$date][$type][$functionCall]: $message"
     Write-output $output
 }
 

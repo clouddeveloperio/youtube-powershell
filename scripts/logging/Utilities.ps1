@@ -1,7 +1,6 @@
 . .\logging.ps1
 
-function TestFunction($message){
-     
+function TestFunction($message){  
      LogToFile -message "Message from another function: $message"
 }
 
